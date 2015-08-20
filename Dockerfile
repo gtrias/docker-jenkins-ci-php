@@ -21,6 +21,8 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
 	apt-get update; \
 	apt-get -qq install php5-cli php5-xsl php5-json php5-curl php5-sqlite php5-mysqlnd php5-xdebug php5-intl php5-mcrypt php-pear curl git ant jenkins
 
+COPY jenkins /etc/default/jenkins
+
 RUN service jenkins start; \
 	while ! echo exit | nc -z -w 3 localhost 8080; do sleep 3; done; \
 	while curl -s http://localhost:8080 | grep "Please wait"; do echo "Waiting for Jenkins to start.." && sleep 3; done; \
