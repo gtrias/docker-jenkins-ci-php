@@ -1,7 +1,7 @@
 # defaults for jenkins continuous integration server
 
 # pulled in from the init script; makes things easier.
-NAME=root
+NAME=jenkins
 
 # location of java
 JAVA=/usr/bin/java
@@ -14,8 +14,8 @@ JAVA_ARGS="-Djava.awt.headless=true"  # Allow graphs etc. to work even when an X
 PIDFILE=/var/run/$NAME/$NAME.pid
 
 # user and group to be invoked as (default to jenkins)
-JENKINS_USER=$NAME
-JENKINS_GROUP=$NAME
+JENKINS_USER=root
+JENKINS_GROUP=root
 
 # location of the jenkins war file
 JENKINS_WAR=/usr/share/$NAME/$NAME.war

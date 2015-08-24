@@ -23,35 +23,44 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
 
 COPY jenkins /etc/default/jenkins
 
-RUN service jenkins start; \
-	while ! echo exit | nc -z -w 3 localhost 8080; do sleep 3; done; \
-	while curl -s http://localhost:8080 | grep "Please wait"; do echo "Waiting for Jenkins to start.." && sleep 3; done; \
-	echo "Jenkins started"; \
-	curl -L http://updates.jenkins-ci.org/update-center.json | sed '1d;$d' | curl -X POST -H 'Accept: application/json' -d @- http://localhost:8080/updateCenter/byId/default/postBack; \
-	wget http://localhost:8080/jnlpJars/jenkins-cli.jar; \
-	java -jar jenkins-cli.jar -s http://localhost:8080 install-plugin checkstyle cloverphp crap4j dry htmlpublisher jdepend plot pmd violations warnings xunit git ansicolor; \
-	java -jar jenkins-cli.jar -s http://localhost:8080 safe-restart; \
-	curl https://raw.githubusercontent.com/sebastianbergmann/php-jenkins-template/master/config.xml | \
-	java -jar jenkins-cli.jar -s http://localhost:8080 create-job php-template; \
-	java -jar jenkins-cli.jar -s http://localhost:8080 reload-configuration
+RUN service jenkins start && \
+        while ! echo exit | nc -z -w 3 localhost 8080; do sleep 3; done; \
+        while curl -s http://localhost:8080 | grep "Please wait"; do echo "Waiting for Jenkins to start.." && sleep 3; done; \
+        echo "Jenkins started" && \
+        wget http://localhost:8080/jnlpJars/jenkins-cli.jar && \
+        java -jar jenkins-cli.jar -s http://localhost:8080 install-plugin checkstyle cloverphp crap4j dry htmlpublisher jdepend plot pmd violations warnings xunit git ansicolor && \
+        java -jar jenkins-cli.jar -s http://localhost:8080 safe-restart && \
+        java -jar jenkins-cli.jar -s http://localhost:8080 reload-configuration
+
+RUN service jenkins start && \
+        while ! echo exit | nc -z -w 3 localhost 8080; do sleep 3; done; \
+        while curl -s http://localhost:8080 | grep "Please wait"; do echo "Waiting for Jenkins to start.." && sleep 3; done; \
+        cd /var/lib/jenkins/jobs && \
+        mkdir php-template && \
+        cd php-template && \
+        wget https://raw.githubusercontent.com/sebastianbergmann/php-jenkins-template/master/config.xml && \
+        cd .. && \
+        wget http://localhost:8080/jnlpJars/jenkins-cli.jar && \
+        java -jar jenkins-cli.jar -s http://localhost:8080 reload-configuration
+
 
 RUN sed -i 's|disable_functions.*=|;disable_functions=|' /etc/php5/cli/php.ini; \
 	echo "xdebug.max_nesting_level = 500" >> /etc/php5/mods-available/xdebug.ini
 
-RUN mkdir -p /home/jenkins/composerbin && chown -R jenkins:jenkins /home/jenkins; \
-	sudo -H -u jenkins bash -c ' \
-		curl -sS https://getcomposer.org/installer | php -- --install-dir=/home/jenkins/composerbin --filename=composer;'; \
-	ln -s /home/jenkins/composerbin/composer /usr/local/bin/; \
-	sudo -H -u jenkins bash -c ' \
-		export COMPOSER_BIN_DIR=/home/jenkins/composerbin; \
-		export COMPOSER_HOME=/home/jenkins; \
-		composer global require "phpunit/phpunit=*" --prefer-source --no-interaction; \
-		composer global require "squizlabs/php_codesniffer=*" --prefer-source --no-interaction; \
-		composer global require "phploc/phploc=*" --prefer-source --no-interaction; \
-		composer global require "pdepend/pdepend=*" --prefer-source --no-interaction; \
-		composer global require "phpmd/phpmd=*" --prefer-source --no-interaction; \
-		composer global require "sebastian/phpcpd=*" --prefer-source --no-interaction; \
-		composer global require "theseer/phpdox=*" --prefer-source --no-interaction; '; \
+RUN mkdir -p /home/jenkins/composerbin && chown -R root:root /home/jenkins; \
+	bash -c ' \
+        curl -sS https://getcomposer.org/installer | php -- --install-dir=/home/jenkins/composerbin --filename=composer;'; \
+        ln -s /home/jenkins/composerbin/composer /usr/local/bin/; \
+        bash -c ' \
+        export COMPOSER_BIN_DIR=/home/jenkins/composerbin; \
+        export COMPOSER_HOME=/home/jenkins; \
+        composer global require "phpunit/phpunit=*" --prefer-source --no-interaction; \
+        composer global require "squizlabs/php_codesniffer=*" --prefer-source --no-interaction; \
+        composer global require "phploc/phploc=*" --prefer-source --no-interaction; \
+        composer global require "pdepend/pdepend=*" --prefer-source --no-interaction; \
+        composer global require "phpmd/phpmd=*" --prefer-source --no-interaction; \
+        composer global require "sebastian/phpcpd=*" --prefer-source --no-interaction; \
+        composer global require "theseer/phpdox=*" --prefer-source --no-interaction; '; \
 	ln -s /home/jenkins/composerbin/pdepend /usr/local/bin/; \
 	ln -s /home/jenkins/composerbin/phpcpd /usr/local/bin/; \
 	ln -s /home/jenkins/composerbin/phpcs /usr/local/bin/; \
